@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Split4Trans</title>
-    <link rel="icon" href="https://raw.githubusercontent.com/panwyyt/280Thread/refs/heads/main/Hatchedboy.ico" type="image/x-icon">
+    <link rel="icon" href="https://raw.githubusercontent.com/panwyyt/280Thread/main/Hatchedboy.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Helvetica:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -107,6 +107,7 @@
             background-color: var(--accent-color);
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
 
         .translation-box {
@@ -140,6 +141,12 @@
             gap: 1rem;
             justify-content: center;
             margin-top: 2rem;
+            position: sticky;
+            bottom: 0;
+            background-color: var(--background-color);
+            padding: 1rem;
+            box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
         }
 
         .btn {
@@ -212,6 +219,22 @@
             margin-left: 0.5rem;
         }
 
+        .text-move-buttons {
+            position: absolute;
+            top: 0;
+            right: 0;
+            display: none;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background-color: var(--background-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .text-section:hover .text-move-buttons {
+            display: flex;
+        }
+
         @media screen and (max-width: 600px) {
             .form-control {
                 font-size: 0.9rem;
@@ -245,15 +268,15 @@
         </div>
 
         <div id="textContainer" class="text-container"></div>
-        
-        <div class="button-group">
-            <button id="copyAllBtn" class="btn">Copy All</button>
-            <button id="saveToTxtBtn" class="btn">Save to TXT</button>
-            <button id="loadWorkBtn" class="btn">Load Work from TXT</button>
-            <button id="clearAllBtn" class="btn btn-danger">Clear All</button>
-            <button id="saveToLibraryBtn" class="btn btn-secondary">Save to Library</button>
-            <button id="openLibraryBtn" class="btn btn-secondary">Manage Library</button>
-        </div>
+    </div>
+
+    <div class="button-group">
+        <button id="copyAllBtn" class="btn">Copy All</button>
+        <button id="saveToTxtBtn" class="btn">Save to TXT</button>
+        <button id="loadWorkBtn" class="btn">Load Work from TXT</button>
+        <button id="clearAllBtn" class="btn btn-danger">Clear All</button>
+        <button id="saveToLibraryBtn" class="btn btn-secondary">Save to Library</button>
+        <button id="openLibraryBtn" class="btn btn-secondary">Manage Library</button>
     </div>
 
     <div id="libraryModal" class="library-modal" style="display: none;">
@@ -310,6 +333,10 @@
                     <div class="character-count">${section.length}/${MAX_SECTION_LENGTH}</div>
                     <textarea class="form-control translation-box" placeholder="Translate section ${index + 1}..."></textarea>
                     <div class="character-count" id="translatedCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
+                    <div class="text-move-buttons">
+                        <button class="btn btn-small" onclick="moveTextUp(${index})">Move Up</button>
+                        <button class="btn btn-small" onclick="moveTextDown(${index})">Move Down</button>
+                    </div>
                 `;
                 textContainer.appendChild(textSection);
 
@@ -317,10 +344,45 @@
                 const translatedCount = textSection.querySelector(`#translatedCount${index + 1}`);
 
                 translatedBox.addEventListener('input', () => {
-                    translatedCount.textContent = `${translatedBox.value.length}/${MAX_SECTION_LENGTH}`;
-                    translatedCount.classList.toggle('warning', translatedBox.value.length > MAX_SECTION_LENGTH);
+                    updateCharacterCount(translatedBox, translatedCount);
                 });
             });
+        }
+
+        function updateCharacterCount(textarea, counter) {
+            counter.textContent = `${textarea.value.length}/${MAX_SECTION_LENGTH}`;
+            counter.classList.toggle('warning', textarea.value.length > MAX_SECTION_LENGTH);
+        }
+
+        function moveTextUp(index) {
+            if (index > 0) {
+                const currentBox = document.querySelectorAll('.text-section')[index].querySelector('.translation-box');
+                const prevBox = document.querySelectorAll('.text-section')[index - 1].querySelector('.translation-box');
+                const selectedText = currentBox.value.slice(currentBox.selectionStart, currentBox.selectionEnd);
+                if (selectedText) {
+                    prevBox.value += selectedText;
+                    currentBox.value = currentBox.value.slice(0, currentBox.selectionStart) + currentBox.value.slice(currentBox.selectionEnd);
+                    // Update character counts
+                    updateCharacterCount(prevBox, document.querySelectorAll('.text-section')[index - 1].querySelector('.character-count'));
+                    updateCharacterCount(currentBox, document.querySelectorAll('.text-section')[index].querySelector('.character-count'));
+                }
+            }
+        }
+
+        function moveTextDown(index) {
+            const sections = document.querySelectorAll('.text-section');
+            if (index < sections.length - 1) {
+                const currentBox = sections[index].querySelector('.translation-box');
+                const nextBox = sections[index + 1].querySelector('.translation-box');
+                const selectedText = currentBox.value.slice(currentBox.selectionStart, currentBox.selectionEnd);
+                if (selectedText) {
+                    nextBox.value = selectedText + nextBox.value;
+                    currentBox.value = currentBox.value.slice(0, currentBox.selectionStart) + currentBox.value.slice(currentBox.selectionEnd);
+                    // Update character counts
+                    updateCharacterCount(nextBox, sections[index + 1].querySelector('.character-count'));
+                    updateCharacterCount(currentBox, sections[index].querySelector('.character-count'));
+                }
+            }
         }
 
         document.getElementById('splitTextBtn').addEventListener('click', () => {
@@ -512,7 +574,6 @@
                 reader.onload = function(e) {
                     const content = e.target.result;
 
-                    // Extract Work Title and Input Text
                     const workTitleMatch = content.match(/Work Title:\s*(.*)/);
                     const inputTextMatch = content.match(/Input Text:\n([\s\S]*?)\n\nSection 1/);
                     const workTitle = workTitleMatch ? workTitleMatch[1].trim() : '';
