@@ -331,7 +331,9 @@
                     <p>Section ${index + 1}</p>
                     <textarea class="form-control translation-box" placeholder="Original section ${index + 1}..." readonly>${section}</textarea>
                     <div class="character-count">${section.length}/${MAX_SECTION_LENGTH}</div>
+                    <textarea class="form-control translation-box" placeholder="Machine Translation section ${index + 1}..."></textarea>
                     <textarea class="form-control translation-box" placeholder="Translate section ${index + 1}..."></textarea>
+                    <div class="character-count" id="machineTranslationCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
                     <div class="character-count" id="translatedCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
                     <div class="text-move-buttons">
                         <button class="btn btn-small" onclick="moveTextUp(${index})">Move Up</button>
@@ -340,8 +342,14 @@
                 `;
                 textContainer.appendChild(textSection);
 
-                const translatedBox = textSection.querySelectorAll('.translation-box')[1];
+                const machineTranslationBox = textSection.querySelectorAll('.translation-box')[1];
+                const translatedBox = textSection.querySelectorAll('.translation-box')[2];
+                const machineTranslationCount = textSection.querySelector(`#machineTranslationCount${index + 1}`);
                 const translatedCount = textSection.querySelector(`#translatedCount${index + 1}`);
+
+                machineTranslationBox.addEventListener('input', () => {
+                    updateCharacterCount(machineTranslationBox, machineTranslationCount);
+                });
 
                 translatedBox.addEventListener('input', () => {
                     updateCharacterCount(translatedBox, translatedCount);
@@ -399,7 +407,7 @@
             let combinedText = '';
 
             document.querySelectorAll('.text-section').forEach(section => {
-                const translatedBox = section.querySelectorAll('.translation-box')[1];
+                const translatedBox = section.querySelectorAll('.translation-box')[2];
                 combinedText += translatedBox.value + '\n\n';
             });
 
@@ -470,15 +478,19 @@
                 library[workTitle] = [];
             }
 
+            const inputText = document.getElementById('inputText').value.trim();
+
             const workData = {
+                inputText: inputText,
                 sections: [],
                 timestamp: Date.now()
             };
 
             document.querySelectorAll('.text-section').forEach(sectionContainer => {
                 const originalText = sectionContainer.querySelector('.translation-box').value;
-                const translatedText = sectionContainer.querySelectorAll('.translation-box')[1].value;
-                workData.sections.push({ original: originalText, translated: translatedText });
+                const machineTranslationText = sectionContainer.querySelectorAll('.translation-box')[1].value;
+                const translatedText = sectionContainer.querySelectorAll('.translation-box')[2].value;
+                workData.sections.push({ original: originalText, machine: machineTranslationText, translated: translatedText });
             });
 
             library[workTitle].push(workData);
@@ -494,9 +506,11 @@
             if (library[title] && library[title][index]) {
                 const workData = library[title][index];
                 document.getElementById('workTitle').value = title;
+                document.getElementById('inputText').value = workData.inputText;
                 renderTextSections(workData.sections.map(section => section.original));
                 workData.sections.forEach((section, idx) => {
-                    document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.translated;
+                    document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.machine;
+                    document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[2].value = section.translated;
                 });
             }
         }
@@ -504,11 +518,11 @@
         function exportWork(title, index) {
             if (library[title] && library[title][index]) {
                 const workData = library[title][index];
-                let content = `Work Title: ${title}\n\n`;
+                let content = `Work Title: ${title}\n\nInput Text:\n${workData.inputText}\n\n`;
 
                 workData.sections.forEach((section, idx) => {
                     content += `Section ${idx + 1}\n`;
-                    content += `Original:\n${section.original}\n\nTranslated:\n${section.translated}\n\n`;
+                    content += `Original:\n${section.original}\n\nMachine Translation:\n${section.machine}\n\nTranslated:\n${section.translated}\n\n`;
                 });
 
                 const timestamp = new Date(workData.timestamp).toLocaleString();
@@ -551,8 +565,9 @@
 
             document.querySelectorAll('.text-section').forEach((section, idx) => {
                 const originalText = section.querySelector('.translation-box').value;
-                const translatedText = section.querySelectorAll('.translation-box')[1].value;
-                content += `Section ${idx + 1}\nOriginal:\n${originalText}\n\nTranslated:\n${translatedText}\n\n`;
+                const machineTranslationText = section.querySelectorAll('.translation-box')[1].value;
+                const translatedText = section.querySelectorAll('.translation-box')[2].value;
+                content += `Section ${idx + 1}\nOriginal:\n${originalText}\n\nMachine Translation:\n${machineTranslationText}\n\nTranslated:\n${translatedText}\n\n`;
             });
 
             const timestamp = new Date().toLocaleString();
@@ -583,14 +598,15 @@
                     document.getElementById('inputText').value = inputText;
 
                     const sections = content.split(/Section \d+/).slice(1).map(section => {
-                        const match = section.match(/Original:\n([\s\S]*?)\n\nTranslated:\n([\s\S]*?)\n\n/);
-                        if (match) return { original: match[1], translated: match[2] };
-                        else return { original: '', translated: '' };
+                        const match = section.match(/Original:\n([\s\S]*?)\n\nMachine Translation:\n([\s\S]*?)\n\nTranslated:\n([\s\S]*?)\n\n/);
+                        if (match) return { original: match[1], machine: match[2], translated: match[3] };
+                        else return { original: '', machine: '', translated: '' };
                     });
-                    
+
                     renderTextSections(sections.map(section => section.original));
                     sections.forEach((section, idx) => {
-                        document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.translated;
+                        document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.machine;
+                        document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[2].value = section.translated;
                     });
                 };
                 reader.readAsText(file);
