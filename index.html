@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split4Trans</title>
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1A73E8;
+            --secondary-color: #FFD700;
+            --text-color: #202124;
+            --background-color: #F5F5F5;
+            --border-color: #E0E0E0;
+            --danger-color: #EA4335;
+            --accent-color: #E8EAED;
+        }
+
+        .dark-theme {
+            --primary-color: #4285F4;
+            --text-color: #E8EAED;
+            --background-color: #121212;
+            --border-color: #333333;
+            --accent-color: #303134;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: var(--background-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary-color);
+            transition: color 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .text-container {
+            margin-top: 1rem;
+        }
+
+        .text-section {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: var(--accent-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .translation-box {
+            width: 100%;
+            min-height: 90px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            resize: vertical;
+            font-size: 1rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin-top: 0.5rem;
+            outline: none;
+        }
+
+        .character-count {
+            font-size: 0.85rem;
+            text-align: right;
+            color: var(--text-color);
+            margin-top: 0.25rem;
+        }
+
+        .character-count.warning {
+            color: var(--danger-color);
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            color: white;
+            background-color: var(--primary-color);
+            display: inline-block;
+            transition: background-color 0.2s ease-in;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: black;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .library-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--background-color);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            max-width: 700px;
+            width: 90%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .library-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background-color: var(--accent-color);
+            border-radius: 8px;
+        }
+
+        .library-item span {
+            flex-grow: 1;
+            margin-right: 10px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .library-item button {
+            margin-left: 0.5rem;
+        }
+
+        @media screen and (max-width: 600px) {
+            .form-control {
+                font-size: 0.9rem;
+            }
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="theme-toggle" id="themeToggle">🌓</div>
+        <div class="header">
+            <h1>Split4Trans</h1>
+        </div>
+        
+        <div class="form-group">
+            <label for="workTitle">Work Title</label>
+            <input type="text" id="workTitle" class="form-control" placeholder="Enter a title for your work">
+        </div>
+        
+        <div class="form-group">
+            <label for="inputText">Input Text</label>
+            <textarea id="inputText" class="form-control" rows="6" placeholder="Paste or upload your text here..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <button id="splitTextBtn" class="btn">Split Text</button>
+        </div>
+
+        <div id="textContainer" class="text-container"></div>
+        
+        <div class="button-group">
+            <button id="copyAllBtn" class="btn">Copy All</button>
+            <button id="saveToTxtBtn" class="btn">Save to TXT</button>
+            <button id="loadWorkBtn" class="btn">Load Work from TXT</button>
+            <button id="clearAllBtn" class="btn btn-danger">Clear All</button>
+            <button id="saveToLibraryBtn" class="btn btn-secondary">Save to Library</button>
+            <button id="openLibraryBtn" class="btn btn-secondary">Manage Library</button>
+        </div>
+    </div>
+
+    <div id="libraryModal" class="library-modal" style="display: none;">
+        <div class="modal">
+            <h2>Translated Works Library</h2>
+            <div id="libraryContainer"></div>
+            <button id="exportLibraryBtn" class="btn">Export Library</button>
+            <input type="file" id="importLibraryFile" class="file-input" style="display:none;">
+            <button id="importLibraryBtn" class="btn">Import Library</button>
+            <button id="closeLibraryBtn" class="btn btn-danger">Close</button>
+        </div>
+    </div>
+
+    <input type="file" id="loadTxtFile" class="file-input" style="display:none;">
+
+    <script>
+        const library = {};
+        const MAX_SECTION_LENGTH = 280;
+
+        function splitTextIntoSections(text, maxChars = MAX_SECTION_LENGTH) {
+            const sections = [];
+            let currentSection = '';
+
+            const sentences = text.match(/[^.!?]+[.!?]+[$)'"`’”]*|.+/g) || [text];
+
+            sentences.forEach(sentence => {
+                if ((currentSection + sentence).length <= maxChars) {
+                    currentSection += sentence;
+                } else {
+                    if (currentSection) {
+                        sections.push(currentSection.trim());
+                    }
+                    currentSection = sentence;
+                }
+            });
+
+            if (currentSection.trim().length > 0) {
+                sections.push(currentSection.trim());
+            }
+
+            return sections;
+        }
+
+        function renderTextSections(sections) {
+            const textContainer = document.getElementById('textContainer');
+            textContainer.innerHTML = '';
+
+            sections.forEach((section, index) => {
+                const textSection = document.createElement('div');
+                textSection.classList.add('text-section');
+                textSection.innerHTML = `
+                    <p>Section ${index + 1}</p>
+                    <textarea class="form-control translation-box" placeholder="Original section ${index + 1}..." readonly>${section}</textarea>
+                    <div class="character-count">${section.length}/${MAX_SECTION_LENGTH}</div>
+                    <textarea class="form-control translation-box" placeholder="Translate section ${index + 1}..."></textarea>
+                    <div class="character-count" id="translatedCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
+                `;
+                textContainer.appendChild(textSection);
+
+                const translatedBox = textSection.querySelectorAll('.translation-box')[1];
+                const translatedCount = textSection.querySelector(`#translatedCount${index + 1}`);
+
+                translatedBox.addEventListener('input', () => {
+                    translatedCount.textContent = `${translatedBox.value.length}/${MAX_SECTION_LENGTH}`;
+                    translatedCount.classList.toggle('warning', translatedBox.value.length > MAX_SECTION_LENGTH);
+                });
+            });
+        }
+
+        document.getElementById('splitTextBtn').addEventListener('click', () => {
+            const text = document.getElementById('inputText').value;
+            if (!text.trim()) {
+                alert('Please enter some text to split.');
+                return;
+            }
+            const sections = splitTextIntoSections(text);
+            renderTextSections(sections);
+        });
+
+        document.getElementById('copyAllBtn').addEventListener('click', () => {
+            let combinedText = '';
+
+            document.querySelectorAll('.text-section').forEach(section => {
+                const translatedBox = section.querySelectorAll('.translation-box')[1];
+                combinedText += translatedBox.value + '\n\n';
+            });
+
+            if (combinedText.trim()) {
+                navigator.clipboard.writeText(combinedText).then(() => {
+                    alert('All translated text copied to clipboard!');
+                });
+            }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            const shouldClear = confirm('Are you sure you want to clear all text and translations?');
+            if (shouldClear) {
+                document.getElementById('inputText').value = '';
+                document.getElementById('textContainer').innerHTML = '';
+                document.getElementById('workTitle').value = '';
+            }
+        });
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+        });
+
+        document.getElementById('openLibraryBtn').addEventListener('click', () => {
+            document.getElementById('libraryModal').style.display = 'flex';
+            updateLibraryDisplay();
+        });
+
+        document.getElementById('closeLibraryBtn').addEventListener('click', () => {
+            document.getElementById('libraryModal').style.display = 'none';
+        });
+
+        function updateLibraryDisplay() {
+            const libraryContainer = document.getElementById('libraryContainer');
+            libraryContainer.innerHTML = '';
+            for (const title in library) {
+                library[title].forEach((version, index) => {
+                    const entry = document.createElement('div');
+                    entry.classList.add('library-item');
+                    entry.innerHTML = `
+                        <span>${title} (Version ${index + 1} - ${new Date(version.timestamp).toLocaleString()})</span>
+                        <div>
+                            <button class="load-entry btn btn-small">Load</button>
+                            <button class="export-entry btn btn-small">Export</button>
+                            <button class="delete-entry btn btn-small btn-danger">Delete</button>
+                        </div>
+                    `;
+                    entry.querySelector('.load-entry').addEventListener('click', () => loadWork(title, index));
+                    entry.querySelector('.export-entry').addEventListener('click', () => exportWork(title, index));
+                    entry.querySelector('.delete-entry').addEventListener('click', () => {
+                        if (confirm(`Are you sure you want to delete version ${index + 1} of "${title}"?`)) {
+                            deleteWork(title, index);
+                        }
+                    });
+                    libraryContainer.appendChild(entry);
+                });
+            }
+        }
+
+        function saveWorkToLibrary() {
+            const workTitle = document.getElementById('workTitle').value.trim();
+            if (!workTitle) {
+                alert('Please enter a work title before saving.');
+                return;
+            }
+
+            if (!library[workTitle]) {
+                library[workTitle] = [];
+            }
+
+            const workData = {
+                sections: [],
+                timestamp: Date.now()
+            };
+
+            document.querySelectorAll('.text-section').forEach(sectionContainer => {
+                const originalText = sectionContainer.querySelector('.translation-box').value;
+                const translatedText = sectionContainer.querySelectorAll('.translation-box')[1].value;
+                workData.sections.push({ original: originalText, translated: translatedText });
+            });
+
+            library[workTitle].push(workData);
+            saveToStorage('workLibrary', library);
+
+            updateLibraryDisplay();
+            alert(`Work "${workTitle}" saved to library.`);
+        }
+
+        document.getElementById('saveToLibraryBtn').addEventListener('click', saveWorkToLibrary);
+
+        function loadWork(title, index) {
+            if (library[title] && library[title][index]) {
+                const workData = library[title][index];
+                document.getElementById('workTitle').value = title;
+                renderTextSections(workData.sections.map(section => section.original));
+                workData.sections.forEach((section, idx) => {
+                    document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.translated;
+                });
+            }
+        }
+
+        function exportWork(title, index) {
+            if (library[title] && library[title][index]) {
+                const workData = library[title][index];
+                let content = `Work Title: ${title}\n\n`;
+
+                workData.sections.forEach((section, idx) => {
+                    content += `Section ${idx + 1}\n`;
+                    content += `Original:\n${section.original}\n\nTranslated:\n${section.translated}\n\n`;
+                });
+
+                const timestamp = new Date(workData.timestamp).toLocaleString();
+                content += `Saved on: ${timestamp}`;
+
+                const blob = new Blob([content], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `S2T_${title}_${new Date().toISOString().replace(/[-T:]/g, '').split('.')[0]}.txt`;
+                link.click();
+            }
+        }
+
+        function deleteWork(title, index) {
+            if (library[title] && library[title][index]) {
+                library[title].splice(index, 1);
+                if (library[title].length === 0) {
+                    delete library[title];
+                }
+                saveToStorage('workLibrary', library);
+                updateLibraryDisplay();
+                alert(`Work "${title}" version ${index + 1} deleted from library.`);
+            }
+        }
+
+        function saveToStorage(name, value) {
+            localStorage.setItem(name, JSON.stringify(value));
+        }
+
+        function getFromStorage(name) {
+            const storedValue = localStorage.getItem(name);
+            return storedValue ? JSON.parse(storedValue) : {};
+        }
+
+        document.getElementById('saveToTxtBtn').addEventListener('click', () => {
+            const workTitle = document.getElementById('workTitle').value.trim() || 'Untitled';
+            const inputText = document.getElementById('inputText').value.trim();
+
+            let content = `Work Title: ${workTitle}\n\nInput Text:\n${inputText}\n\n`;
+
+            document.querySelectorAll('.text-section').forEach((section, idx) => {
+                const originalText = section.querySelector('.translation-box').value;
+                const translatedText = section.querySelectorAll('.translation-box')[1].value;
+                content += `Section ${idx + 1}\nOriginal:\n${originalText}\n\nTranslated:\n${translatedText}\n\n`;
+            });
+
+            const timestamp = new Date().toLocaleString();
+            content += `Saved on: ${timestamp}`;
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `S2T_${workTitle}_${new Date().toISOString().replace(/[-T:]/g, '').split('.')[0]}.txt`;
+            link.click();
+        });
+
+        document.getElementById('loadWorkBtn').addEventListener('click', () => {
+            const inputFile = document.getElementById('loadTxtFile');
+            inputFile.click();
+            inputFile.onchange = event => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+
+                    // Extract Work Title and Input Text
+                    const workTitleMatch = content.match(/Work Title:\s*(.*)/);
+                    const inputTextMatch = content.match(/Input Text:\n([\s\S]*?)\n\nSection 1/);
+                    const workTitle = workTitleMatch ? workTitleMatch[1].trim() : '';
+                    const inputText = inputTextMatch ? inputTextMatch[1].trim() : '';
+
+                    document.getElementById('workTitle').value = workTitle;
+                    document.getElementById('inputText').value = inputText;
+
+                    const sections = content.split(/Section \d+/).slice(1).map(section => {
+                        const match = section.match(/Original:\n([\s\S]*?)\n\nTranslated:\n([\s\S]*?)\n\n/);
+                        if (match) return { original: match[1], translated: match[2] };
+                        else return { original: '', translated: '' };
+                    });
+                    
+                    renderTextSections(sections.map(section => section.original));
+                    sections.forEach((section, idx) => {
+                        document.querySelectorAll('.text-section')[idx].querySelectorAll('.translation-box')[1].value = section.translated;
+                    });
+                };
+                reader.readAsText(file);
+            };
+        });
+
+        document.getElementById('exportLibraryBtn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(library)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Split4Trans_Library.json';
+            link.click();
+        });
+
+        document.getElementById('importLibraryBtn').addEventListener('click', () => {
+            const importFile = document.getElementById('importLibraryFile');
+            importFile.click();
+            importFile.onchange = event => {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = JSON.parse(e.target.result);
+                    Object.entries(content).forEach(([title, versions]) => {
+                        if (!library[title]) {
+                            library[title] = [];
+                        }
+                        library[title].push(...versions);
+                    });
+                    saveToStorage('workLibrary', library);
+                    updateLibraryDisplay();
+                    alert('Library imported successfully!');
+                };
+                reader.readAsText(file);
+            };
+        });
+
+        Object.assign(library, getFromStorage('workLibrary'));
+    </script>
+</body>
+</html>
