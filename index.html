@@ -299,17 +299,21 @@
         function splitTextIntoSections(text, maxChars = MAX_SECTION_LENGTH) {
             const sections = [];
             let currentSection = '';
+            let currentLength = 0;
 
-            const sentences = text.match(/[^.!?]+[.!?]+[$)'"`’”]*|.+/g) || [text];
+            // Use a regex to split Thai text into words
+            const words = text.match(/[\u0E00-\u0E7F]+|\S+/g) || [text];
 
-            sentences.forEach(sentence => {
-                if ((currentSection + sentence).length <= maxChars) {
-                    currentSection += sentence;
+            words.forEach(word => {
+                if (currentLength + word.length <= maxChars) {
+                    currentSection += word;
+                    currentLength += word.length;
                 } else {
                     if (currentSection) {
                         sections.push(currentSection.trim());
                     }
-                    currentSection = sentence;
+                    currentSection = word;
+                    currentLength = word.length;
                 }
             });
 
