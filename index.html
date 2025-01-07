@@ -301,23 +301,25 @@
             let currentSection = '';
             let currentLength = 0;
 
-            // Use a regex to split Thai text into words
-            const words = text.match(/[\u0E00-\u0E7F]+|\S+/g) || [text];
+            // Split the text into lines
+            const lines = text.split('\n');
 
-            words.forEach(word => {
-                if (currentLength + word.length <= maxChars) {
-                    currentSection += word;
-                    currentLength += word.length;
-                } else {
-                    if (currentSection) {
+            lines.forEach(line => {
+                // If the current line plus the current section exceeds the max length, push the current section
+                if (currentLength + line.length > maxChars) {
+                    if (currentSection.trim()) {
                         sections.push(currentSection.trim());
                     }
-                    currentSection = word;
-                    currentLength = word.length;
+                    currentSection = line + '\n';
+                    currentLength = line.length + 1; // +1 for the newline character
+                } else {
+                    currentSection += line + '\n';
+                    currentLength += line.length + 1; // +1 for the newline character
                 }
             });
 
-            if (currentSection.trim().length > 0) {
+            // Push the last section if it exists
+            if (currentSection.trim()) {
                 sections.push(currentSection.trim());
             }
 
