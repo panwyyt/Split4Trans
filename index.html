@@ -15,6 +15,7 @@
             --border-color: #E0E0E0;
             --danger-color: #EA4335;
             --accent-color: #E8EAED;
+            --machine-bg-color: #E3F2FD; /* Light blue for machine translation */
         }
 
         .dark-theme {
@@ -23,6 +24,7 @@
             --background-color: #121212;
             --border-color: #333333;
             --accent-color: #303134;
+            --machine-bg-color: #0D47A1; /* Darker blue for machine translation in dark mode */
         }
 
         * {
@@ -41,12 +43,27 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: auto;
             background-color: var(--background-color);
             border-radius: 12px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
+            display: flex;
+            gap: 2rem;
+        }
+
+        .main-content {
+            flex: 3;
+        }
+
+        .preview-sidebar {
+            flex: 1;
+            background-color: var(--accent-color);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .theme-toggle {
@@ -122,6 +139,10 @@
             color: var(--text-color);
             margin-top: 0.5rem;
             outline: none;
+        }
+
+        .machine-translation-box {
+            background-color: var(--machine-bg-color);
         }
 
         .character-count {
@@ -235,6 +256,18 @@
             display: flex;
         }
 
+        .preview-thread {
+            margin-top: 1rem;
+        }
+
+        .preview-thread-item {
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background-color: var(--background-color);
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
         @media screen and (max-width: 600px) {
             .form-control {
                 font-size: 0.9rem;
@@ -249,29 +282,37 @@
 <body>
     <div class="container">
         <div class="theme-toggle" id="themeToggle">🌓</div>
-        <div class="header">
-            <h1>Split4Trans</h1>
-        </div>
-        
-        <div class="form-group">
-            <label for="workTitle">Work Title</label>
-            <input type="text" id="workTitle" class="form-control" placeholder="Enter a title for your work">
-        </div>
-        
-        <div class="form-group">
-            <label for="inputText">Input Text</label>
-            <textarea id="inputText" class="form-control" rows="6" placeholder="Paste or upload your text here..."></textarea>
-        </div>
-        
-        <div class="form-group">
-            <button id="splitTextBtn" class="btn">Split Text</button>
+        <div class="main-content">
+            <div class="header">
+                <h1>Split4Trans</h1>
+            </div>
+            
+            <div class="form-group">
+                <label for="workTitle">Work Title</label>
+                <input type="text" id="workTitle" class="form-control" placeholder="Enter a title for your work">
+            </div>
+            
+            <div class="form-group">
+                <label for="inputText">Input Text</label>
+                <textarea id="inputText" class="form-control" rows="6" placeholder="Paste or upload your text here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <button id="splitTextBtn" class="btn">Split Text</button>
+            </div>
+
+            <div id="textContainer" class="text-container"></div>
         </div>
 
-        <div id="textContainer" class="text-container"></div>
+        <div class="preview-sidebar">
+            <h3>Translation Thread Preview</h3>
+            <div id="previewThread" class="preview-thread"></div>
+        </div>
     </div>
 
     <div class="button-group">
         <button id="copyAllBtn" class="btn">Copy All</button>
+        <button id="copyMachineBtn" class="btn">Copy Machine Translation</button>
         <button id="saveToTxtBtn" class="btn">Save to TXT</button>
         <button id="loadWorkBtn" class="btn">Load Work from TXT</button>
         <button id="clearAllBtn" class="btn btn-danger">Clear All</button>
@@ -301,24 +342,21 @@
             let currentSection = '';
             let currentLength = 0;
 
-            // Split the text into lines
             const lines = text.split('\n');
 
             lines.forEach(line => {
-                // If the current line plus the current section exceeds the max length, push the current section
                 if (currentLength + line.length > maxChars) {
                     if (currentSection.trim()) {
                         sections.push(currentSection.trim());
                     }
                     currentSection = line + '\n';
-                    currentLength = line.length + 1; // +1 for the newline character
+                    currentLength = line.length + 1;
                 } else {
                     currentSection += line + '\n';
-                    currentLength += line.length + 1; // +1 for the newline character
+                    currentLength += line.length + 1;
                 }
             });
 
-            // Push the last section if it exists
             if (currentSection.trim()) {
                 sections.push(currentSection.trim());
             }
@@ -337,9 +375,9 @@
                     <p>Section ${index + 1}</p>
                     <textarea class="form-control translation-box" placeholder="Original section ${index + 1}..." readonly>${section}</textarea>
                     <div class="character-count">${section.length}/${MAX_SECTION_LENGTH}</div>
-                    <textarea class="form-control translation-box" placeholder="Machine Translation section ${index + 1}..."></textarea>
-                    <textarea class="form-control translation-box" placeholder="Translate section ${index + 1}..."></textarea>
+                    <textarea class="form-control translation-box machine-translation-box" placeholder="Machine Translation section ${index + 1}..."></textarea>
                     <div class="character-count" id="machineTranslationCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
+                    <textarea class="form-control translation-box" placeholder="Translate section ${index + 1}..."></textarea>
                     <div class="character-count" id="translatedCount${index + 1}">0/${MAX_SECTION_LENGTH}</div>
                     <div class="text-move-buttons">
                         <button class="btn btn-small" onclick="moveTextUp(${index})">Move Up</button>
@@ -355,17 +393,37 @@
 
                 machineTranslationBox.addEventListener('input', () => {
                     updateCharacterCount(machineTranslationBox, machineTranslationCount);
+                    updatePreview();
                 });
 
                 translatedBox.addEventListener('input', () => {
                     updateCharacterCount(translatedBox, translatedCount);
+                    updatePreview();
                 });
             });
+
+            updatePreview();
         }
 
         function updateCharacterCount(textarea, counter) {
             counter.textContent = `${textarea.value.length}/${MAX_SECTION_LENGTH}`;
             counter.classList.toggle('warning', textarea.value.length > MAX_SECTION_LENGTH);
+        }
+
+        function updatePreview() {
+            const previewThread = document.getElementById('previewThread');
+            previewThread.innerHTML = '';
+
+            document.querySelectorAll('.text-section').forEach((section, index) => {
+                const translatedBox = section.querySelectorAll('.translation-box')[2];
+                const previewItem = document.createElement('div');
+                previewItem.classList.add('preview-thread-item');
+                previewItem.innerHTML = `
+                    <strong>Section ${index + 1}</strong>
+                    <p>${translatedBox.value || 'No translation yet...'}</p>
+                `;
+                previewThread.appendChild(previewItem);
+            });
         }
 
         function moveTextUp(index) {
@@ -376,7 +434,6 @@
                 if (selectedText) {
                     prevBox.value += selectedText;
                     currentBox.value = currentBox.value.slice(0, currentBox.selectionStart) + currentBox.value.slice(currentBox.selectionEnd);
-                    // Update character counts
                     updateCharacterCount(prevBox, document.querySelectorAll('.text-section')[index - 1].querySelector('.character-count'));
                     updateCharacterCount(currentBox, document.querySelectorAll('.text-section')[index].querySelector('.character-count'));
                 }
@@ -392,7 +449,6 @@
                 if (selectedText) {
                     nextBox.value = selectedText + nextBox.value;
                     currentBox.value = currentBox.value.slice(0, currentBox.selectionStart) + currentBox.value.slice(currentBox.selectionEnd);
-                    // Update character counts
                     updateCharacterCount(nextBox, sections[index + 1].querySelector('.character-count'));
                     updateCharacterCount(currentBox, sections[index].querySelector('.character-count'));
                 }
@@ -424,12 +480,28 @@
             }
         });
 
+        document.getElementById('copyMachineBtn').addEventListener('click', () => {
+            let combinedText = '';
+
+            document.querySelectorAll('.text-section').forEach(section => {
+                const machineTranslationBox = section.querySelectorAll('.translation-box')[1];
+                combinedText += machineTranslationBox.value + '\n\n';
+            });
+
+            if (combinedText.trim()) {
+                navigator.clipboard.writeText(combinedText).then(() => {
+                    alert('All machine-translated text copied to clipboard!');
+                });
+            }
+        });
+
         document.getElementById('clearAllBtn').addEventListener('click', () => {
             const shouldClear = confirm('Are you sure you want to clear all text and translations?');
             if (shouldClear) {
                 document.getElementById('inputText').value = '';
                 document.getElementById('textContainer').innerHTML = '';
                 document.getElementById('workTitle').value = '';
+                document.getElementById('previewThread').innerHTML = '';
             }
         });
 
