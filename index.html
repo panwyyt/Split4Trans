@@ -420,7 +420,7 @@
                 previewItem.classList.add('preview-thread-item');
                 previewItem.innerHTML = `
                     <strong>Section ${index + 1}</strong>
-                    <p>${translatedBox.value || 'No translation yet...'}</p>
+                    <p>${translatedBox.value.replace(/\n/g, '<br>') || 'No translation yet...'}</p>
                 `;
                 previewThread.appendChild(previewItem);
             });
