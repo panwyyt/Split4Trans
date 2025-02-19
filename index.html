@@ -51,10 +51,12 @@
             padding: 1.5rem;
             display: flex;
             gap: 2rem;
+            flex-wrap: wrap;
         }
 
         .main-content {
             flex: 3;
+            min-width: 100%;
         }
 
         .preview-sidebar {
@@ -276,6 +278,16 @@
                 padding: 0.5rem 1rem;
                 font-size: 0.9rem;
             }
+            .container {
+                flex-direction: column;
+            }
+            .main-content {
+                min-width: 100%;
+            }
+            .preview-sidebar {
+                min-width: 100%;
+                margin-top: 1rem;
+            }
         }
     </style>
 </head>
@@ -286,17 +298,17 @@
             <div class="header">
                 <h1>Split4Trans</h1>
             </div>
-            
+
             <div class="form-group">
                 <label for="workTitle">Work Title</label>
                 <input type="text" id="workTitle" class="form-control" placeholder="Enter a title for your work">
             </div>
-            
+
             <div class="form-group">
                 <label for="inputText">Input Text</label>
                 <textarea id="inputText" class="form-control" rows="6" placeholder="Paste or upload your text here..."></textarea>
             </div>
-            
+
             <div class="form-group">
                 <button id="splitTextBtn" class="btn">Split Text</button>
             </div>
